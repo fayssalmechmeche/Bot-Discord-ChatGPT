@@ -24,11 +24,11 @@ client.player = new Player(client, {
 let commands = [];
 
 const slashFiles = fs
-  .readdirSync("./slashcommands")
+  .readdirSync("./slash")
   .filter((file) => file.endsWith(".js"));
 for (const file of slashFiles) {
-  const slashcmd = require(`./slashcommands/${file}`);
-  client.slashcommands.set(command.data.name, command);
+  const slashcmd = require(`./slash/${file}`);
+  client.slashcommands.set(slashcmd.data.name, slashcmd);
   if (LOAD_SLASH) commands.push(slashcmd.data.toJSON());
 }
 

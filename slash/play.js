@@ -6,18 +6,7 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName("play")
     .setDescription("Play a song")
-    .addStringOption((option) =>
-      option
-        .setName("song")
-        .setDescription("The song to play")
-        .setStringOption((option) =>
-          option
-            .setName("song")
-            .setDescription("The song to play")
-            .setRequired(true)
-        )
-    )
-    .addSubCommand((subcommand) =>
+    .addSubcommand((subcommand) =>
       subcommand
         .setName("song")
         .setDescription("The song to play")
@@ -28,7 +17,7 @@ module.exports = {
             .setRequired(true)
         )
     )
-    .addSubCommand((subcommand) =>
+    .addSubcommand((subcommand) =>
       subcommand
         .setName("seatch")
         .setDescription("Search music")
