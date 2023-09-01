@@ -10,7 +10,7 @@ import {
 
 import OpenAI from "openai";
 import "dotenv/config";
-import { v4 as uuidv4 } from "uuid";
+import slugify from "slugify";
 const client = new Client({
   intents: [
     IntentsBitField.Flags.Guilds,
@@ -68,6 +68,20 @@ client.on("interactionCreate", async (interaction) => {
       interaction.reply("Vous n'avez pas le droit de faire ça ici !");
       return;
     }
+
+    let slug = slugify(interaction.user.username, {
+      remove: /[*+~.()'"!:@]/g,
+      lower: true,
+    });
+    console.log(slug);
+    if (
+      interaction.guild.channels.cache.find(
+        (channel) => channel.name === `gpt-aventure-${slug}`
+      )
+    ) {
+      interaction.reply("Vous avez déjà une partie en cours !");
+      return;
+    }
     let channel = await interaction.guild.channels.create({
       name: `GPT Aventure-${interaction.user.username}`,
       type: ChannelType.GUILD_TEXT,
@@ -90,7 +104,7 @@ client.on("interactionCreate", async (interaction) => {
     });
 
     channel.send(
-      `C'est ici que ça ton aventure va commencer ! @${interaction.user.username}`
+      `C'est ici que ça ton aventure va commencer ! <@${interaction.user.id}>`
     );
     serverID.push(channel.id);
     console.log(serverID);
@@ -155,10 +169,16 @@ client.on("messageCreate", async (msg) => {
     result.choices[0].message.content.includes("Fin de ton aventure") ||
     result.choices[0].message.content.includes("l'aventure prend fin")
   ) {
-    await msg.channel.messages.cache.forEach((message) => {
-      message.delete();
-    });
-    await msg.channel.send("Pour relancer une partie, écrivez `Jouer");
+    msg.channel.send("Fin de l'aventure !");
+    msg.channel.send(
+      "Pour rejouer, écrivez `Jouer` dans le channel `gpt-aventure`"
+    );
+    msg.channel.send("Merci d'avoir joué !");
+    msg.channel.send("Vous pouvez fermer ce channel.");
+    msg.channel.send("Ce channel sera supprimé dans 10 secondes.");
+    setTimeout(() => {
+      msg.channel.delete();
+    }, 10000);
   }
 });
 
