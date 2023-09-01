@@ -69,7 +69,7 @@ client.on("interactionCreate", async (interaction) => {
       return;
     }
     let channel = await interaction.guild.channels.create({
-      name: "GPT Aventure",
+      name: `GPT Aventure-${interaction.user.username}`,
       type: ChannelType.GUILD_TEXT,
       permissionOverwrites: [
         {
@@ -90,7 +90,7 @@ client.on("interactionCreate", async (interaction) => {
     });
 
     channel.send(
-      `C'est ici que ça ton aventure va commencer ! @${interaction.user.id}`
+      `C'est ici que ça ton aventure va commencer ! @${interaction.user.username}`
     );
     serverID.push(channel.id);
     console.log(serverID);
