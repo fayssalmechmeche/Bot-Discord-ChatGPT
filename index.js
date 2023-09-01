@@ -1,4 +1,12 @@
-import { Client, GatewayIntentBits, IntentsBitField } from "discord.js";
+import {
+  ChannelType,
+  Client,
+  GatewayIntentBits,
+  IntentsBitField,
+  PermissionFlagsBits,
+  REST,
+  Routes,
+} from "discord.js";
 
 import OpenAI from "openai";
 import "dotenv/config";
@@ -9,6 +17,26 @@ const client = new Client({
     IntentsBitField.Flags.MessageContent,
   ],
 });
+
+const commands = [
+  {
+    name: "play",
+    description: "Replies with Play!",
+  },
+];
+const rest = new REST({ version: "10" }).setToken(process.env.TOKEN);
+
+try {
+  console.log("Started refreshing application (/) commands.");
+
+  await rest.put(Routes.applicationCommands(process.env.APPID), {
+    body: commands,
+  });
+
+  console.log("Successfully reloaded application (/) commands.");
+} catch (error) {
+  console.error(error);
+}
 
 let conversationLog = [];
 client.on("ready", () => {
@@ -30,6 +58,32 @@ client.on("interactionCreate", async (interaction) => {
 
   if (interaction.commandName === "ping") {
     await interaction.reply("Pong!");
+  }
+  if (interaction.commandName === "play") {
+    await interaction.guild.channels.create({
+      name: "GPT Aventure",
+      type: ChannelType.GUILD_TEXT,
+      id: process.env.SERVEUR,
+      permissionOverwrites: [
+        {
+          id: interaction.guild.roles.everyone.id,
+          deny: [
+            PermissionFlagsBits.ViewChannel,
+            PermissionFlagsBits.SendMessages,
+          ],
+        },
+        {
+          id: interaction.user.id,
+          allow: [
+            PermissionFlagsBits.ViewChannel,
+            PermissionFlagsBits.SendMessages,
+          ],
+        },
+      ],
+    });
+    await interaction.channel.send(
+      "Pour jouer, écrivez `Jouer` dans le channel `gpt-aventure`"
+    );
   }
 });
 
