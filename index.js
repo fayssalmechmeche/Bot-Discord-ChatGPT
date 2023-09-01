@@ -109,7 +109,7 @@ client.on("interactionCreate", async (interaction) => {
     serverID.push(channel.id);
     console.log(serverID);
     await interaction.channel.send(
-      "Pour jouer, écrivez `Jouer` dans le channel `gpt-aventure`"
+      "Un salon a été crée ta partie, pour jouer, écris un message dans le channel `gpt-aventure`"
     );
   }
 });
@@ -178,7 +178,7 @@ client.on("messageCreate", async (msg) => {
     msg.channel.send("Ce channel sera supprimé dans 10 secondes.");
     setTimeout(() => {
       msg.channel.delete();
-    }, 10000);
+    }, 20000);
   }
 });
 
