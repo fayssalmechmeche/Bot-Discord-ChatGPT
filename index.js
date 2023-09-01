@@ -10,6 +10,7 @@ import {
 
 import OpenAI from "openai";
 import "dotenv/config";
+import { v4 as uuidv4 } from "uuid";
 const client = new Client({
   intents: [
     IntentsBitField.Flags.Guilds,
@@ -24,6 +25,9 @@ const commands = [
     description: "Replies with Play!",
   },
 ];
+
+let serverID = [];
+
 const rest = new REST({ version: "10" }).setToken(process.env.TOKEN);
 
 try {
@@ -60,10 +64,13 @@ client.on("interactionCreate", async (interaction) => {
     await interaction.reply("Pong!");
   }
   if (interaction.commandName === "play") {
-    await interaction.guild.channels.create({
+    if (interaction.channel.id !== process.env.SERVEUR) {
+      interaction.reply("Vous n'avez pas le droit de faire ça ici !");
+      return;
+    }
+    let channel = await interaction.guild.channels.create({
       name: "GPT Aventure",
       type: ChannelType.GUILD_TEXT,
-      id: process.env.SERVEUR,
       permissionOverwrites: [
         {
           id: interaction.guild.roles.everyone.id,
@@ -81,6 +88,12 @@ client.on("interactionCreate", async (interaction) => {
         },
       ],
     });
+
+    channel.send(
+      `C'est ici que ça ton aventure va commencer ! @${interaction.user.id}`
+    );
+    serverID.push(channel.id);
+    console.log(serverID);
     await interaction.channel.send(
       "Pour jouer, écrivez `Jouer` dans le channel `gpt-aventure`"
     );
@@ -91,7 +104,7 @@ const openai = new OpenAI(process.env.OPENAI_API_KEY);
 
 client.on("messageCreate", async (msg) => {
   if (msg.author.bot) return;
-  if (msg.channel.id !== process.env.SERVEUR) return;
+  if (!serverID.includes(msg.channel.id)) return;
   if (msg.content.startsWith("!")) return;
 
   await msg.channel.sendTyping();
@@ -99,16 +112,16 @@ client.on("messageCreate", async (msg) => {
   let previousMessage = await msg.channel.messages.fetch({ limit: 15 });
   await previousMessage.reverse();
 
-  if (msg.content.startsWith("Jouer")) {
-    // supprimer tout les messages sauf celui envoyé par l'utilisateur
+  // if (msg.content.startsWith("Jouer")) {
+  //   // supprimer tout les messages sauf celui envoyé par l'utilisateur
 
-    await msg.channel.messages.cache.forEach((message) => {
-      if (message.id == msg.id) return;
-      message.delete();
-    });
+  //   await msg.channel.messages.cache.forEach((message) => {
+  //     if (message.id == msg.id) return;
+  //     message.delete();
+  //   });
 
-    await msg.channel.send("Nouvelle Aventure !");
-  }
+  //   await msg.channel.send("Nouvelle Aventure !");
+  // }
   await previousMessage.forEach((message) => {
     if (message.author.bot && message.author.id !== client.user.id) return;
     if (message.content.startsWith("!")) return;
