@@ -21,8 +21,8 @@ const client = new Client({
 
 const commands = [
   {
-    name: "play",
-    description: "Replies with Play!",
+    name: "aventure",
+    description: "Commencer une aventure avec Fayce bot !",
   },
 ];
 
@@ -63,7 +63,7 @@ client.on("interactionCreate", async (interaction) => {
   if (interaction.commandName === "ping") {
     await interaction.reply("Pong!");
   }
-  if (interaction.commandName === "play") {
+  if (interaction.commandName === "aventure") {
     if (interaction.channel.id !== process.env.SERVEUR) {
       interaction.reply("Vous n'avez pas le droit de faire ça ici !");
       return;
