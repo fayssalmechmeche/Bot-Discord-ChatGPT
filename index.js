@@ -27,7 +27,7 @@ const commands = [
 ];
 
 let serverID = [];
-let conversationLog = [];
+
 const rest = new REST({ version: "10" }).setToken(process.env.TOKEN);
 const openai = new OpenAI(process.env.OPENAI_API_KEY);
 
@@ -49,11 +49,6 @@ client.on("ready", () => {
   client.user.setPresence({
     activities: [{ name: "GPT Aventure !" }],
     status: "online",
-  });
-  conversationLog.push({
-    role: "system",
-    content:
-      "tu es un maître de jeu de rôle. Tu vas guider un personnage à travers un monde fantastique rempli de monstres et de héros. À chaque étape, tu lui proposeras 3 choix possibles. Chaque choix a des conséquences et le joueur doit tout faire pour que son personnage survive. Le jeu se termine lorsque le personnage du joueur meurt. Dans ta première réponse, demande-lui son nom. Dans la deuxième réponse, demande-lui sa classe (chevalier, mage, archer, etc.). Dans la troisième réponse, demande-lui sa race (humain, elfe, nain, etc.). L'histoire se déroule dans un monde fantastique où un dragon terrifiant règne au sommet d'un volcan. Le but ultime du héros est de vaincre ce dragon. Prépare-toi à improviser de nombreux défis pour guider le joueur jusqu'au dragon. Une fois que le joueur a choisi sa classe et sa race, tu pourras commencer l'aventure en fonction de ses choix. Lorsque tu présenteras les choix. Tu dois prendre en compte ses réponses pour créer une expérience immersive et captivante. Les choix doivent devenir de plus en plus compliqué jusqu'à pousser le joueur à choisir le mauvais choix et mourir. Donc un de tes choix doit etre un mauvais choix pour l'utilisateur. Si le joueur décide de mettre fin à l'aventure, tu dois absulument répondre `Fin de l'aventure !`.",
   });
 });
 
@@ -106,7 +101,13 @@ client.on("interactionCreate", async (interaction) => {
     channel.send(
       `C'est ici que ça ton aventure va commencer ! <@${interaction.user.id}>`
     );
-    serverID.push(channel.id);
+    let conversationLog = [];
+    conversationLog.push({
+      role: "system",
+      content:
+        "tu es un maître de jeu de rôle. Tu vas guider un personnage à travers un monde fantastique rempli de monstres et de héros. À chaque étape, tu lui proposeras 3 choix possibles. Chaque choix a des conséquences et le joueur doit tout faire pour que son personnage survive. Le jeu se termine lorsque le personnage du joueur meurt. Dans ta première réponse, demande-lui son nom. Dans la deuxième réponse, demande-lui sa classe (chevalier, mage, archer, etc.). Dans la troisième réponse, demande-lui sa race (humain, elfe, nain, etc.). L'histoire se déroule dans un monde fantastique où un dragon terrifiant règne au sommet d'un volcan. Le but ultime du héros est de vaincre ce dragon. Prépare-toi à improviser de nombreux défis pour guider le joueur jusqu'au dragon. Une fois que le joueur a choisi sa classe et sa race, tu pourras commencer l'aventure en fonction de ses choix. Lorsque tu présenteras les choix. Tu dois prendre en compte ses réponses pour créer une expérience immersive et captivante. Les choix doivent devenir de plus en plus compliqué jusqu'à pousser le joueur à choisir le mauvais choix et mourir. Donc un de tes choix doit etre un mauvais choix pour l'utilisateur. Si le joueur décide de mettre fin à l'aventure, tu dois absulument répondre `Fin de l'aventure !`.",
+    });
+    serverID.push({ id: channel.id, conversationLog: conversationLog });
 
     await interaction.channel.send(
       "Un salon a été crée ta partie, pour jouer, écris un message dans le channel `gpt-aventure`"
@@ -116,7 +117,7 @@ client.on("interactionCreate", async (interaction) => {
 
 client.on("messageCreate", async (msg) => {
   if (msg.author.bot) return;
-  if (!serverID.includes(msg.channel.id)) return;
+  if (!serverID.find((server) => server.id === msg.channel.id)) return;
   if (msg.content.startsWith("!")) return;
   await msg.channel.permissionOverwrites.set([
     {
@@ -145,30 +146,40 @@ client.on("messageCreate", async (msg) => {
 
   //   await msg.channel.send("Nouvelle Aventure !");
   // }
+  await console.log("etape 1");
   await previousMessage.forEach((message) => {
     if (message.author.bot && message.author.id !== client.user.id) return;
     if (message.content.startsWith("!")) return;
     if (message.author.id !== msg.author.id) return;
-    conversationLog.push({
-      role: "user",
-      content: `${message.content}.`,
+    serverID.forEach((server) => {
+      if (server.id !== msg.channel.id) return;
+      server.conversationLog.push({
+        role: "user",
+        content: message.content,
+      });
     });
   });
+  await console.log("etape 2");
 
   const result = await openai.chat.completions.create({
     model: "gpt-3.5-turbo",
-    messages: conversationLog,
+    messages: serverID.filter((server) => server.id === msg.channel.id)[0][
+      "conversationLog"
+    ],
   });
+  // Le reste de votre code de traitement des résultats
 
-  await conversationLog.push({
-    role: "system",
-    content: result.choices[0].message.content,
-  });
+  await console.log("etape 3");
+  await serverID
+    .filter((server) => server.id === msg.channel.id)[0]
+    .conversationLog.push({
+      role: "system",
+      content: result.choices[0].message.content,
+    });
 
-  console.log("conversationLog");
-  console.log(conversationLog);
-
+  await console.log("etape 4");
   await msg.reply(result.choices[0].message);
+  await console.log("etape 5");
   await msg.channel.permissionOverwrites.set([
     {
       id: msg.guild.roles.everyone.id,
