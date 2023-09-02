@@ -27,8 +27,9 @@ const commands = [
 ];
 
 let serverID = [];
-
+let conversationLog = [];
 const rest = new REST({ version: "10" }).setToken(process.env.TOKEN);
+const openai = new OpenAI(process.env.OPENAI_API_KEY);
 
 try {
   console.log("Started refreshing application (/) commands.");
@@ -42,7 +43,6 @@ try {
   console.error(error);
 }
 
-let conversationLog = [];
 client.on("ready", () => {
   console.log(`Logged in as ${client.user.tag}!`);
 
@@ -73,7 +73,7 @@ client.on("interactionCreate", async (interaction) => {
       remove: /[*+~.()'"!:@]/g,
       lower: true,
     });
-    console.log(slug);
+
     if (
       interaction.guild.channels.cache.find(
         (channel) => channel.name === `gpt-aventure-${slug}`
@@ -107,14 +107,12 @@ client.on("interactionCreate", async (interaction) => {
       `C'est ici que ça ton aventure va commencer ! <@${interaction.user.id}>`
     );
     serverID.push(channel.id);
-    console.log(serverID);
+
     await interaction.channel.send(
       "Un salon a été crée ta partie, pour jouer, écris un message dans le channel `gpt-aventure`"
     );
   }
 });
-
-const openai = new OpenAI(process.env.OPENAI_API_KEY);
 
 client.on("messageCreate", async (msg) => {
   if (msg.author.bot) return;
@@ -167,7 +165,7 @@ client.on("messageCreate", async (msg) => {
     content: result.choices[0].message.content,
   });
 
-  console.log("MESSAGE");
+  console.log("conversationLog");
   console.log(conversationLog);
 
   await msg.reply(result.choices[0].message);
@@ -208,15 +206,12 @@ client.on("messageCreate", async (msg) => {
       },
     ]);
     msg.channel.send("Fin de l'aventure !");
-    msg.channel.send(
-      "Pour rejouer, écrivez `Jouer` dans le channel `gpt-aventure`"
-    );
     msg.channel.send("Merci d'avoir joué !");
     msg.channel.send("Vous pouvez fermer ce channel.");
-    msg.channel.send("Ce channel sera supprimé dans 10 secondes.");
+    msg.channel.send("Ce channel sera supprimé dans 60 secondes.");
     setTimeout(() => {
       msg.channel.delete();
-    }, 20000);
+    }, 60000);
   }
 });
 
