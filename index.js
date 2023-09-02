@@ -120,6 +120,17 @@ client.on("messageCreate", async (msg) => {
   if (msg.author.bot) return;
   if (!serverID.includes(msg.channel.id)) return;
   if (msg.content.startsWith("!")) return;
+  await msg.channel.permissionOverwrites.set([
+    {
+      id: msg.guild.roles.everyone.id,
+      deny: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages],
+    },
+    {
+      id: msg.author.id,
+      deny: [PermissionFlagsBits.SendMessages],
+      allow: [PermissionFlagsBits.ViewChannel],
+    },
+  ]);
 
   await msg.channel.sendTyping();
 
@@ -160,6 +171,19 @@ client.on("messageCreate", async (msg) => {
   console.log(conversationLog);
 
   await msg.reply(result.choices[0].message);
+  await msg.channel.permissionOverwrites.set([
+    {
+      id: msg.guild.roles.everyone.id,
+      deny: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages],
+    },
+    {
+      id: msg.author.id,
+      allow: [
+        PermissionFlagsBits.ViewChannel,
+        PermissionFlagsBits.SendMessages,
+      ],
+    },
+  ]);
 
   if (
     result.choices[0].message.content.includes("Fin de l'aventure") ||
@@ -169,6 +193,20 @@ client.on("messageCreate", async (msg) => {
     result.choices[0].message.content.includes("Fin de ton aventure") ||
     result.choices[0].message.content.includes("l'aventure prend fin")
   ) {
+    await msg.channel.permissionOverwrites.set([
+      {
+        id: msg.guild.roles.everyone.id,
+        deny: [
+          PermissionFlagsBits.ViewChannel,
+          PermissionFlagsBits.SendMessages,
+        ],
+      },
+      {
+        id: msg.author.id,
+        deny: [PermissionFlagsBits.SendMessages],
+        allow: [PermissionFlagsBits.ViewChannel],
+      },
+    ]);
     msg.channel.send("Fin de l'aventure !");
     msg.channel.send(
       "Pour rejouer, écrivez `Jouer` dans le channel `gpt-aventure`"
